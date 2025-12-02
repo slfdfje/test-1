@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import cors from "cors";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import fs from "fs";
 import AWS from "aws-sdk";
 import path from "path";
@@ -27,12 +27,70 @@ const s3 = new AWS.S3({
 });
 
 const BUCKET = "jigu";
+const REF_DIR = "reference_images";
 
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
+if (!fs.existsSync(REF_DIR)) fs.mkdirSync(REF_DIR);
+
+// Download reference images from S3 on startup
+async function downloadReferenceImages() {
+  console.log("Checking reference images...");
+  try {
+    const data = await s3.listObjectsV2({ Bucket: BUCKET, Prefix: "reference_images/" }).promise();
+    const images = (data.Contents || []).filter(f => !f.Key.endsWith("/"));
+    
+    if (images.length === 0) {
+      console.log("No reference images found in S3");
+      return;
+    }
+    
+    // Check how many we already have
+    const existingFiles = fs.existsSync(REF_DIR) ? fs.readdirSync(REF_DIR) : [];
+    console.log(`Found ${images.length} reference images in S3, ${existingFiles.length} locally`);
+    
+    // Download missing images
+    let downloaded = 0;
+    for (const obj of images) {
+      const filename = path.basename(obj.Key);
+      const localPath = path.join(REF_DIR, filename);
+      
+      if (!fs.existsSync(localPath)) {
+        console.log(`Downloading ${filename}...`);
+        const fileData = await s3.getObject({ Bucket: BUCKET, Key: obj.Key }).promise();
+        fs.writeFileSync(localPath, fileData.Body);
+        downloaded++;
+      }
+    }
+    
+    console.log(`Downloaded ${downloaded} new reference images`);
+  } catch (e) {
+    console.error("Error downloading reference images:", e.message);
+  }
+}
 
 // Optional auth middleware
 const optionalAuth = REQUIRE_AUTH ? authMiddleware("read") : (req, res, next) => next();
 const writeAuth = REQUIRE_AUTH ? authMiddleware("write") : (req, res, next) => next();
+
+// Health check endpoint
+app.get("/", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    service: "AI Glasses Backend",
+    version: "1.0.0",
+    endpoints: ["/models", "/match-model", "/upload-model", "/rebuild-embeddings"],
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "healthy", 
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.get("/models", optionalAuth, async (req, res) => {
   try {
@@ -133,5 +191,16 @@ app.post("/match-model", optionalAuth, upload.array("images", 5), async (req, re
   }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`3D AI Dashboard backend running on ${PORT}`));
+const PORT = process.env.PORT || 5000;
+
+// Start server and download reference images
+async function startServer() {
+  // Download reference images first
+  await downloadReferenceImages();
+  
+  app.listen(PORT, () => {
+    console.log(`3D AI Dashboard backend running on ${PORT}`);
+  });
+}
+
+startServer();

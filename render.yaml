@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: ai-glasses-backend
+    runtime: node
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install && pip3 install --user torch transformers pillow boto3
+    startCommand: cd backend && node server.mjs
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: REQUIRE_AUTH
+        value: false
+      - key: NODE_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    healthCheckPath: /models
+    autoDeploy: true
