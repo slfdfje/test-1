@@ -1,12 +1,11 @@
 services:
   - type: web
     name: ai-glasses-backend
-    runtime: node
-    env: node
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     region: oregon
     plan: free
-    buildCommand: cd backend && npm install && pip3 install --user torch transformers pillow boto3
-    startCommand: cd backend && node server.mjs
     envVars:
       - key: PORT
         value: 5000

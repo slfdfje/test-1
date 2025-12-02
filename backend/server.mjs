@@ -99,9 +99,11 @@ app.get("/debug", async (req, res) => {
   
   // Check Python
   let pythonVersion = "not found";
+  let torchInstalled = "unknown";
   try {
     const { execSync } = await import("child_process");
     pythonVersion = execSync("python3 --version 2>&1 || python --version 2>&1").toString().trim();
+    torchInstalled = execSync("python3 -c 'import torch; print(torch.__version__)' 2>&1 || echo 'not installed'").toString().trim();
   } catch (e) {
     pythonVersion = "error: " + e.message;
   }
@@ -110,6 +112,7 @@ app.get("/debug", async (req, res) => {
     referenceImages: refImages.length,
     embeddingsExist,
     pythonVersion,
+    torchInstalled,
     cwd: process.cwd(),
     uploadsExist: fs.existsSync("uploads"),
     refDirExist: fs.existsSync(REF_DIR)
