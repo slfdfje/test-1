@@ -92,6 +92,30 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Debug endpoint to check system status
+app.get("/debug", async (req, res) => {
+  const refImages = fs.existsSync(REF_DIR) ? fs.readdirSync(REF_DIR) : [];
+  const embeddingsExist = fs.existsSync("reference_embeddings.pt");
+  
+  // Check Python
+  let pythonVersion = "not found";
+  try {
+    const { execSync } = await import("child_process");
+    pythonVersion = execSync("python3 --version 2>&1 || python --version 2>&1").toString().trim();
+  } catch (e) {
+    pythonVersion = "error: " + e.message;
+  }
+  
+  res.json({
+    referenceImages: refImages.length,
+    embeddingsExist,
+    pythonVersion,
+    cwd: process.cwd(),
+    uploadsExist: fs.existsSync("uploads"),
+    refDirExist: fs.existsSync(REF_DIR)
+  });
+});
+
 app.get("/models", optionalAuth, async (req, res) => {
   try {
     const data = await s3.listObjectsV2({ Bucket: BUCKET }).promise();
