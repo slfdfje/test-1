@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+backend/node_modules
+frontend/node_modules
+venv
+.venv
+__pycache__
+*.pyc
+
+# Large files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.pt
+reference_embeddings.pt
+
+# Development files
+.git
+.gitignore
+*.md
+.env.local
+.env.development
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+test_*
+*_test.py
+
+# Frontend (not needed for backend deploy)
+frontend/
+
+# Docker
+.dockerignore
