@@ -1,11 +1,11 @@
-# Dependencies
+# Root level dependencies
 node_modules
-backend/node_modules
-frontend/node_modules
 venv
 .venv
-__pycache__
-*.pyc
+
+# Python cache
+**/__pycache__
+**/*.pyc
 
 # Large files
 *.mp4
@@ -13,12 +13,10 @@ __pycache__
 *.mov
 *.mkv
 *.pt
-reference_embeddings.pt
 
 # Development files
 .git
 .gitignore
-*.md
 .env.local
 .env.development
 
@@ -30,12 +28,11 @@ reference_embeddings.pt
 *.log
 npm-debug.log*
 
-# Test files
-test_*
-*_test.py
-
 # Frontend (not needed for backend deploy)
 frontend/
+
+# Root markdown files only
+/*.md
 
 # Docker
 .dockerignore
