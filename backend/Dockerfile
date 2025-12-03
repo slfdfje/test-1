@@ -6,9 +6,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy Python requirements and install
+# Copy Python requirements and install (no cache to save space)
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
 COPY . .
