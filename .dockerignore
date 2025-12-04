@@ -1,15 +1,14 @@
 # Ignore everything first
 *
-
 # Allow backend folder and its contents
 !backend/
 !backend/**
 
 # But ignore these in backend
-backend/node_modules
-backend/venv
-backend/.venv
-backend/__pycache__
+backend/node_modules/
+backend/venv/
+backend/.venv/
+backend/__pycache__/
 backend/*.pt
 backend/*.mp4
 backend/*.avi
