@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Viewer from "./Viewer.jsx";
 
-const API = "https://ai-glasses-backend.onrender.com";
+const API = "https://ai-glasses-backend.up.railway.app";
 
 export default function App() {
   const [files, setFiles] = useState([]);
@@ -209,7 +209,7 @@ export default function App() {
               <div className="match-header">
                 <h3>Best Match Found</h3>
                 <div className="confidence-badge">
-                  {Math.round(matchResult.confidence * 100)}% Match
+                  {matchResult.confidence ? Math.round(matchResult.confidence * 100) : 0}% Match
                 </div>
               </div>
               <div className="model-name">{matchResult.best_model}</div>
