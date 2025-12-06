@@ -1,17 +1,17 @@
-FROM nikolaik/python-nodejs:latest
+FROM nikolaik/python-nodejs:python3.11-nodejs20
 
 WORKDIR /app
 
 # Copy and install Node dependencies
-COPY backend/package*.json ./
+COPY backend/package.json backend/package-lock.json ./
 RUN npm install
 
 # Copy and install Python dependencies (CPU-only PyTorch)
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend application code
-COPY backend/*.mjs backend/*.py backend/*.json ./
+# Copy all backend application code
+COPY backend/ ./
 
 # Create necessary directories
 RUN mkdir -p uploads reference_images

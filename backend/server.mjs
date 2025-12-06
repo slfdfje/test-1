@@ -17,16 +17,16 @@ const upload = multer({ dest: "uploads/" });
 // Enable/disable authentication
 const REQUIRE_AUTH = process.env.REQUIRE_AUTH === "true" || false;
 
-// WASABI / S3 config - replace with your credentials
+// WASABI / S3 config
 const s3 = new AWS.S3({
-  endpoint: "s3.eu-west-1.wasabisys.com",
-  region: "eu-west-1",
-  accessKeyId: "CIRUITZOGBCJ0JVNF24E",
-  secretAccessKey: "q7yMsemeGeQ70P4DYzXrmFeuUjb5ms62bucg28ec",
+  endpoint: process.env.AWS_ENDPOINT || "s3.eu-west-1.wasabisys.com",
+  region: process.env.AWS_REGION || "eu-west-1",
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   signatureVersion: "v4"
 });
 
-const BUCKET = "jigu";
+const BUCKET = process.env.S3_BUCKET || "jigu";
 const REF_DIR = "reference_images";
 
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");

@@ -1,16 +1,37 @@
-# Ignore everything first
-*
+# Frontend - not needed for backend
+frontend/
 
-# Allow backend folder and its contents
-!backend/
-!backend/**
+# Git
+.git/
+.github/
 
-# But ignore these in backend
-backend/node_modules
-backend/venv
-backend/.venv
-backend/__pycache__
-backend/*.pt
-backend/*.mp4
-backend/*.avi
-backend/*.mov
+# IDE
+.vscode/
+.idea/
+
+# Docs
+*.md
+*.txt
+
+# Large files
+*.pt
+*.mp4
+*.avi
+*.mov
+
+# Dev files
+.env.local
+.env.development
+
+# Nested dockerfiles (use root only)
+backend/Dockerfile
+backend/.dockerignore
+
+# Node modules (will be installed fresh)
+**/node_modules/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/venv/
+**/.venv/

@@ -1,28 +1,24 @@
-FROM nikolaik/python-nodejs:latest
+# Use latest Node Alpine image
+FROM node:20-alpine
 
+# Create app directory
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy only package files first to install dependencies
 COPY package*.json ./
-RUN npm install
 
-# Copy Python requirements and install (no cache to save space)
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Install only production dependencies
+RUN npm install --omit=dev
 
-# Copy the rest of the application
+# Copy remaining backend files
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p uploads reference_images
-
-# Expose port
-EXPOSE 5000
-
-# Set environment variables
-ENV PORT=5000
+# Set Environment
 ENV NODE_ENV=production
-ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
 
-# Start the server
-CMD ["node", "server.mjs"]
+# Expose backend port
+EXPOSE 8080
+
+# Start backend server
+CMD ["npm", "start"]
