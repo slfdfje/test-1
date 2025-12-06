@@ -9,7 +9,18 @@ import { authMiddleware } from "./auth.mjs";
 import { sendWebhook } from "./webhook.mjs";
 
 const app = express();
-app.use(cors());
+
+// CORS configuration - allow all origins
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  credentials: false
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 
 const upload = multer({ dest: "uploads/" });
