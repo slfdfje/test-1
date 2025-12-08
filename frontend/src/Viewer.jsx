@@ -55,7 +55,7 @@ export default function Viewer({ modelName }) {
     function resize() { const w = container.clientWidth || 600; const h = container.clientHeight || 400; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
     window.addEventListener("resize", resize); resize();
     let stop = false;
-    function animate() { if (stop) return; requestAnimationFrame(animate); if (current) current.rotation.y += 0.01; else if (skeleton.visible) skeleton.rotation.y += 0.01; controls.update(); renderer.render(scene, camera); }
+    function animate() { if (stop) return; requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
     function clearCurrent() { if (current) { scene.remove(current); current.traverse(c => { if (c.isMesh) { c.geometry && c.geometry.dispose(); if (c.material) { if (Array.isArray(c.material)) c.material.forEach(m => m.dispose && m.dispose()); else c.material.dispose && c.material.dispose(); } } }); current = null; } }
     setLoading(true); skeleton.visible = true;
