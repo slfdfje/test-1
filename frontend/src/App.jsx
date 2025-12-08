@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Viewer from "./Viewer.jsx";
 
-const API = "https://ai-glasses-backend.onrender.com";
+const API = "https://test-1-production-7a52.up.railway.app";
 
 export default function App() {
   const [files, setFiles] = useState([]);
