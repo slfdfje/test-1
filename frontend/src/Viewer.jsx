@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-const API = "https://ai-glasses-backend.onrender.com";
+const API = "https://test-1-production-7a52.up.railway.app";
 
 export default function Viewer({ modelName }) {
   const ref = useRef(null);
