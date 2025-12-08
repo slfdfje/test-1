@@ -55,7 +55,7 @@ export default function App() {
     files.forEach(file => formData.append("images", file));
 
     try {
-      const response = await fetch(`${API_URL}/match`, {
+      const response = await fetch(`${API}/match-model`, {
 
         method: "POST",
         body: formData
