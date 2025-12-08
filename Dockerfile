@@ -6,7 +6,10 @@ WORKDIR /app
 COPY backend/package.json backend/package-lock.json ./
 RUN npm install
 
-# Install Python dependencies (minimal)
+# Install CPU-only PyTorch first (from PyTorch index)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Install other Python dependencies (from PyPI)
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
