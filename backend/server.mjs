@@ -172,7 +172,7 @@ app.post("/upload-model", writeAuth, upload.fields([{ name: "file" }, { name: "t
 
 app.post("/rebuild-embeddings", writeAuth, async (req, res) => {
   try {
-    const py = spawn("python", ["match.py", "--build"], { cwd: process.cwd() });
+    const py = spawn("python3", ["match.py", "--build"], { cwd: process.cwd() });
     let out = "", errOut = "";
     py.stdout.on("data", d => out += d.toString());
     py.stderr.on("data", d => errOut += d.toString());
@@ -190,13 +190,15 @@ app.post("/match-model", optionalAuth, upload.array("images", 5), async (req, re
   try {
     if (!req.files || req.files.length === 0) return res.status(400).json({ error: "No images uploaded" });
     const filePaths = req.files.map(f => f.path);
-    const py = spawn("python", ["match.py", ...filePaths], { cwd: process.cwd() });
+    console.log("Running match.py with files:", filePaths);
+    const py = spawn("python3", ["match.py", ...filePaths], { cwd: process.cwd() });
     let out = "", errOut = "";
-    py.stdout.on("data", d => out += d.toString());
-    py.stderr.on("data", d => errOut += d.toString());
+    py.stdout.on("data", d => { out += d.toString(); console.log("Python stdout:", d.toString()); });
+    py.stderr.on("data", d => { errOut += d.toString(); console.log("Python stderr:", d.toString()); });
     py.on("close", async code => {
+      console.log("Python exit code:", code, "stdout:", out, "stderr:", errOut);
       filePaths.forEach(p => fs.unlink(p, () => {}));
-      if (code !== 0) return res.status(500).json({ error: "AI matching failed", details: errOut || out });
+      if (code !== 0) return res.status(500).json({ error: "AI matching failed", details: errOut || out, code });
       try {
         const jsonOut = JSON.parse(out);
         
