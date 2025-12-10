@@ -28,16 +28,20 @@ const upload = multer({ dest: "uploads/" });
 // Enable/disable authentication
 const REQUIRE_AUTH = process.env.REQUIRE_AUTH === "true" || false;
 
-// WASABI / S3 config
+// WASABI / S3 config - supports multiple env var names
+const s3Endpoint = process.env.AWS_ENDPOINT || process.env.WASABI_ENDPOINT_URI || "s3.ap-southeast-1.wasabisys.com";
+const s3Region = process.env.AWS_REGION || "ap-southeast-1";
 const s3 = new AWS.S3({
-  endpoint: process.env.AWS_ENDPOINT || "s3.eu-west-1.wasabisys.com",
-  region: process.env.AWS_REGION || "eu-west-1",
+  endpoint: s3Endpoint.replace('https://', '').replace('http://', ''),
+  region: s3Region,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  signatureVersion: "v4"
+  signatureVersion: "v4",
+  s3ForcePathStyle: true
 });
 
-const BUCKET = process.env.S3_BUCKET || "jigu";
+const BUCKET = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME || "jigu";
+console.log(`S3 Config: endpoint=${s3Endpoint}, bucket=${BUCKET}`);
 const REF_DIR = "reference_images";
 
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
