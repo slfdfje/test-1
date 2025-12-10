@@ -1,17 +1,20 @@
-FROM nikolaik/python-nodejs:python3.11-nodejs20
+FROM python:3.11-slim
+
+# Install Node.js
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Install Python dependencies first (for caching)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir transformers pillow boto3
 
 # Copy and install Node dependencies
 COPY backend/package.json backend/package-lock.json ./
 RUN npm install
-
-# Install CPU-only PyTorch first (from PyTorch index)
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-
-# Install other Python dependencies (from PyPI)
-COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
 COPY backend/ ./
