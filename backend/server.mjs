@@ -233,14 +233,11 @@ app.post("/match-model", optionalAuth, upload.array("images", 5), async (req, re
 
 const PORT = process.env.PORT || 5000;
 
-// Start server and download reference images
-async function startServer() {
-  // Download reference images first
-  await downloadReferenceImages();
-  
-  app.listen(PORT, () => {
-    console.log(`3D AI Dashboard backend running on ${PORT}`);
+// Start server immediately, download images in background
+app.listen(PORT, () => {
+  console.log(`3D AI Dashboard backend running on ${PORT}`);
+  // Download reference images in background (don't block startup)
+  downloadReferenceImages().catch(err => {
+    console.error("Background download error:", err);
   });
-}
-
-startServer();
+});
