@@ -1,3 +1,4 @@
 transformers
 pillow
 boto3
+torch

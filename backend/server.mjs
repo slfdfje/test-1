@@ -203,9 +203,14 @@ app.post("/match-model", optionalAuth, upload.array("images", 5), async (req, re
     py.on("close", async code => {
       console.log("Python exit code:", code, "stdout:", out, "stderr:", errOut);
       filePaths.forEach(p => fs.unlink(p, () => {}));
-      if (code !== 0) return res.status(500).json({ error: "AI matching failed", details: errOut || out, code });
+      
+      // Try to parse, even if status code is non-zero (exception handler might have printed json)
       try {
         const jsonOut = JSON.parse(out);
+        if (jsonOut.error) {
+             console.error("Match.py returned error:", jsonOut.error);
+             return res.status(500).json(jsonOut);
+        }
         
         // Send webhook notification
         const webhookData = {
@@ -226,7 +231,9 @@ app.post("/match-model", optionalAuth, upload.array("images", 5), async (req, re
         });
         
         res.json(jsonOut);
-      } catch (e) {
+      } catch (parseError) {
+        console.error("Failed to parse output:", out);
+        if (code !== 0) return res.status(500).json({ error: "AI matching failed", details: errOut || out, code, raw: out });
         res.status(500).json({ error: "Bad AI output", raw: out.toString() });
       }
     });
