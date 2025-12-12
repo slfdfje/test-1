@@ -42,6 +42,7 @@ const s3 = new AWS.S3({
 
 const BUCKET = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME || "jigu";
 console.log(`S3 Config: endpoint=${s3Endpoint}, bucket=${BUCKET}`);
+console.log(`AWS Credentials: key=${process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'MISSING'}, secret=${process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'MISSING'}`);
 const REF_DIR = "reference_images";
 
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
