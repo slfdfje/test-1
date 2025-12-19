@@ -1,24 +1,31 @@
-# Use latest Node Alpine image
-FROM node:20-alpine
+# Use Python base with Node.js for AI matching
+FROM python:3.11-slim
 
-# Create app directory
+# Install Node.js
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy only package files first to install dependencies
-COPY package*.json ./
+# Install Python dependencies first (for caching)
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install only production dependencies
+# Install Node dependencies
+COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copy remaining backend files
+# Copy app files
 COPY . .
 
-# Set Environment
+# Create directories
+RUN mkdir -p uploads reference_images
+
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV PORT=5000
 
-# Expose backend port
-EXPOSE 8080
+EXPOSE 5000
 
-# Start backend server
-CMD ["npm", "start"]
+CMD ["node", "server.mjs"]
