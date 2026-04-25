@@ -1,0 +1,63 @@
+[
+  {
+    "id": "4e8abb9b-0b56-4ccd-a8da-a5ff72fe3d9f",
+    "brand": "ra",
+    "model": "aviator",
+    "price": 100,
+    "category": "eyeglasses",
+    "status": "approved",
+    "uploadedAt": "2026-04-17T12:13:12.447Z",
+    "thumbnailUrl": "/thumbnails/4e8abb9b-0b56-4ccd-a8da-a5ff72fe3d9f.jpg",
+    "modelUrl": "/output/4e8abb9b-0b56-4ccd-a8da-a5ff72fe3d9f.glb",
+    "measurements": {
+      "width": "140",
+      "bridge": "20",
+      "temple": "145"
+    },
+    "approvedAt": "2026-04-17T14:25:14.853Z",
+    "approvedBy": "admin",
+    "generatedWith": "test-model",
+    "generationStatus": "generated",
+    "generationError": null,
+    "generationStartedAt": null,
+    "generationCompletedAt": null,
+    "dimensions": {
+      "frameWidth": 140,
+      "bridgeWidth": 20,
+      "templeLength": 145
+    },
+    "sourceImages": []
+  },
+  {
+    "id": "f5f90eaf-6609-4130-9685-94a2a3daf6c2",
+    "brand": "Ray Ban",
+    "model": "Aviator",
+    "price": 100,
+    "category": "sunglasses",
+    "status": "approved",
+    "uploadedAt": "2026-04-23T12:21:44.525Z",
+    "thumbnailUrl": "/thumbnails/f5f90eaf-6609-4130-9685-94a2a3daf6c2_0.jpg",
+    "sourceImages": [
+      "thumbnails\\f5f90eaf-6609-4130-9685-94a2a3daf6c2_0.jpg",
+      "thumbnails\\f5f90eaf-6609-4130-9685-94a2a3daf6c2_1.jpg",
+      "thumbnails\\f5f90eaf-6609-4130-9685-94a2a3daf6c2_2.jpg"
+    ],
+    "dimensions": {
+      "frameWidth": 140,
+      "bridgeWidth": 20,
+      "templeLength": 145
+    },
+    "modelUrl": "/output/f5f90eaf-6609-4130-9685-94a2a3daf6c2.glb",
+    "measurements": {
+      "frameWidth": 140,
+      "bridgeWidth": 20,
+      "templeLength": 145
+    },
+    "generationStatus": "generated",
+    "generationError": null,
+    "generationStartedAt": "2026-04-23T12:21:44.525Z",
+    "generationCompletedAt": "2026-04-23T12:22:22.134Z",
+    "approvedAt": "2026-04-23T12:22:33.883Z",
+    "approvedBy": "admin"
+  }
+]

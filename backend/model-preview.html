@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header h1 { font-size: 1.25rem; }
+        .header .meta { font-size: 0.875rem; opacity: 0.8; }
+        #canvas-container {
+            flex: 1;
+            position: relative;
+        }
+        canvas { display: block; width: 100% !important; height: 100% !important; }
+        #info {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #error {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fc8181;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🕶️ 3D Model Preview</h1>
+            <div class="meta" id="modelMeta">Loading...</div>
+        </div>
+    </div>
+    <div id="canvas-container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <div>Loading 3D model...</div>
+        </div>
+        <div id="error">
+            <div style="font-size:3rem;">⚠️</div>
+            <div id="errorMsg">Failed to load model</div>
+        </div>
+    </div>
+    <div id="info">🖱️ Left drag to rotate &nbsp;|&nbsp; Scroll to zoom &nbsp;|&nbsp; Right drag to pan</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const params = new URLSearchParams(window.location.search);
+        const modelId = params.get('model');
+
+        if (!modelId) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('errorMsg').textContent = 'No model ID provided';
+            throw new Error('No model ID');
+        }
+
+        // Fetch model info from backend
+        const API = 'http://localhost:5002';
+        let modelUrl = API + '/output/' + modelId + '.glb';
+
+        try {
+            const res = await fetch(API + '/admin/glasses/' + modelId);
+            if (res.ok) {
+                const data = await res.json();
+                const meta = document.getElementById('modelMeta');
+                meta.textContent = data.brand + ' ' + data.model
+                    + (data.dimensions ? ' — ' + data.dimensions.frameWidth + 'mm × ' + data.dimensions.bridgeWidth + 'mm × ' + data.dimensions.templeLength + 'mm' : '');
+                if (data.modelUrl) {
+                    modelUrl = API + data.modelUrl;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch model metadata:', e);
+        }
+
+        // Three.js setup
+        const container = document.getElementById('canvas-container');
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.001, 10000);
+        camera.position.set(0, 0, 3);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 0.5;
+        controls.maxDistance = 20;
+
+        // Studio lighting for metallic glasses
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        // Key light (top-front)
+        const keyLight = new THREE.DirectionalLight(0xfff5e0, 2.5);
+        keyLight.position.set(2, 4, 3);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 2048;
+        keyLight.shadow.mapSize.height = 2048;
+        scene.add(keyLight);
+
+        // Fill light (left side, cool)
+        const fillLight = new THREE.DirectionalLight(0xc8d8ff, 1.0);
+        fillLight.position.set(-4, 1, 2);
+        scene.add(fillLight);
+
+        // Rim light (back, warm)
+        const rimLight = new THREE.DirectionalLight(0xffe8c0, 1.5);
+        rimLight.position.set(0, -2, -4);
+        scene.add(rimLight);
+
+        // Top light for lens reflections
+        const topLight = new THREE.PointLight(0xffffff, 1.0, 500);
+        topLight.position.set(0, 8, 0);
+        scene.add(topLight);
+
+        // Grid
+        const grid = new THREE.GridHelper(10, 20, 0x333355, 0x222244);
+        grid.position.y = -1;
+        scene.add(grid);
+
+        // Load GLB
+        const loader = new GLTFLoader();
+        loader.load(
+            modelUrl,
+            (gltf) => {
+                document.getElementById('loading').style.display = 'none';
+
+                const model = gltf.scene;
+                scene.add(model);
+
+                // Compute bounding box AFTER adding to scene
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+
+                console.log('Model size:', size, 'maxDim:', maxDim, 'center:', center);
+
+                // Center the model at origin
+                model.position.set(-center.x, -center.y, -center.z);
+
+                // Move grid below model
+                grid.position.y = -size.y / 2 - 0.01;
+
+                // Fit camera: distance = maxDim * 1.5, looking at origin
+                const fitDistance = maxDim * 1.8;
+                camera.position.set(0, maxDim * 0.3, fitDistance);
+                camera.near = maxDim * 0.001;
+                camera.far = maxDim * 100;
+                camera.updateProjectionMatrix();
+
+                controls.target.set(0, 0, 0);
+                controls.minDistance = maxDim * 0.1;
+                controls.maxDistance = maxDim * 20;
+                controls.update();
+            },
+            (progress) => {
+                if (progress.total > 0) {
+                    const pct = Math.round(progress.loaded / progress.total * 100);
+                    document.querySelector('#loading div:last-child').textContent = 'Loading... ' + pct + '%';
+                }
+            },
+            (error) => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('errorMsg').textContent = 'Failed to load model: ' + error.message;
+                console.error('GLB load error:', error);
+            }
+        );
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Animate
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

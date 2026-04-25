@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Alignment Tool - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: #1a202c;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        .controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 320px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .controls-panel h2 {
+            margin-bottom: 20px;
+            color: #1a202c;
+            font-size: 1.25rem;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-size: 0.9rem;
+        }
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .control-btn {
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        .slider-control {
+            margin-bottom: 15px;
+        }
+        .slider-control label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .slider-control input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+        }
+        .slider-control input[type="range"]::-webkit-slider-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        .value-display {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+        .model-selector {
+            margin-bottom: 20px;
+        }
+        .model-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        .info-panel h3 {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .info-panel p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .preset-btn {
+            padding: 8px;
+            background: #edf2f7;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2d3748;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover {
+            background: #e2e8f0;
+            border-color: #667eea;
+        }
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="controls-panel">
+        <h2>🎯 Alignment Tool</h2>
+
+        <div id="statusMessage"></div>
+
+        <!-- Model Selector -->
+        <div class="model-selector">
+            <label>Select Glasses Model</label>
+            <select id="glassesSelect" onchange="loadGlassesModel(this.value)">
+                <option value="">Loading models...</option>
+            </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Position Controls -->
+        <div class="control-group">
+            <label>Position</label>
+            <div class="control-row">
+                <button class="control-btn" onclick="adjustPosition('y', 0.01)">↑</button>
+                <button class="control-btn" onclick="adjustPosition('z', 0.01)">Forward</button>
+                <button class="control-btn" onclick="adjustPosition('x', 0.01)">→</button>
+            </div>
+            <div class="control-row">
+                <button class="control-btn" onclick="adjustPosition('y', -0.01)">↓</button>
+                <button class="control-btn" onclick="adjustPosition('z', -0.01)">Back</button>
+                <button class="control-btn" onclick="adjustPosition('x', -0.01)">←</button>
+            </div>
+        </div>
+
+        <!-- Scale Controls -->
+        <div class="control-group">
+            <label>Scale</label>
+            <div class="slider-control">
+                <label>
+                    <span>Size</span>
+                    <span class="value-display" id="scaleValue">1.00</span>
+                </label>
+                <input type="range" id="scaleSlider" min="0.5" max="2" step="0.01" value="1" 
+                       oninput="adjustScale(this.value)">
+            </div>
+            <div class="control-row">
+                <button class="control-btn" onclick="adjustScaleBtn(-0.05)">Smaller</button>
+                <button class="control-btn" onclick="resetScale()">Reset</button>
+                <button class="control-btn" onclick="adjustScaleBtn(0.05)">Bigger</button>
+            </div>
+        </div>
+
+        <!-- Rotation Controls -->
+        <div class="control-group">
+            <label>Rotation</label>
+            <div class="slider-control">
+                <label>
+                    <span>Tilt (Z)</span>
+                    <span class="value-display" id="rotZValue">0°</span>
+                </label>
+                <input type="range" id="rotZSlider" min="-45" max="45" step="1" value="0" 
+                       oninput="adjustRotation('z', this.value)">
+            </div>
+            <div class="slider-control">
+                <label>
+                    <span>Turn (Y)</span>
+                    <span class="value-display" id="rotYValue">0°</span>
+                </label>
+                <input type="range" id="rotYSlider" min="-45" max="45" step="1" value="0" 
+                       oninput="adjustRotation('y', this.value)">
+            </div>
+            <div class="slider-control">
+                <label>
+                    <span>Nod (X)</span>
+                    <span class="value-display" id="rotXValue">0°</span>
+                </label>
+                <input type="range" id="rotXSlider" min="-45" max="45" step="1" value="0" 
+                       oninput="adjustRotation('x', this.value)">
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Presets -->
+        <div class="control-group">
+            <label>Quick Presets</label>
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="applyPreset('default')">Default</button>
+                <button class="preset-btn" onclick="applyPreset('higher')">Higher</button>
+                <button class="preset-btn" onclick="applyPreset('lower')">Lower</button>
+                <button class="preset-btn" onclick="applyPreset('wider')">Wider</button>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="saveAlignment()">💾 Save Alignment</button>
+            <button class="btn btn-secondary" onclick="testOnFace()">👤 Test on Real Face</button>
+            <button class="btn btn-danger" onclick="resetAlignment()">🔄 Reset All</button>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3>⌨️ Keyboard Shortcuts</h3>
+        <p><strong>Arrow Keys:</strong> Move position</p>
+        <p><strong>Q/A:</strong> Scale up/down</p>
+        <p><strong>Z/X:</strong> Rotate left/right</p>
+        <p><strong>W/S:</strong> Move forward/back</p>
+        <p><strong>R:</strong> Reset alignment</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="admin-alignment.js"></script>
+</body>
+</html>

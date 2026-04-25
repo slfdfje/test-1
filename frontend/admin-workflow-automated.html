@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Workflow - Automated Generation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f7fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin-bottom: 0.5rem;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #718096;
+            margin-top: 0.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .section h2 {
+            margin-bottom: 1.5rem;
+            color: #1a202c;
+        }
+        .upload-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+        input, select {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .glasses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .glasses-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .glasses-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        .glasses-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #edf2f7;
+        }
+        .glasses-info {
+            padding: 1.25rem;
+        }
+        .glasses-title {
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+        .glasses-meta {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .status-processing {
+            background: #fef3c7;
+            color: #78350f;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .status-generated {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        .status-approved {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .status-failed {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .error-message {
+            font-size: 0.75rem;
+            color: #e53e3e;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fff5f5;
+            border-radius: 4px;
+        }
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .actions .btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: #718096;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        #imagePreview {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        small {
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Admin Workflow Dashboard - Automated Generation</h1>
+        <p>Upload glasses with dimensions - 3D models generate automatically</p>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="section">
+            <h2>📤 Upload New Glasses</h2>
+            <div id="uploadMessage"></div>
+            <form id="uploadForm" class="upload-form">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Images (3 required: Front view + Both temple sides)</label>
+                    <input type="file" name="images" accept="image/*" multiple required id="imageInput">
+                    <small style="color: #718096; margin-top: 0.25rem; display: block;">
+                        📸 Upload 3 images: 1) Front view of glasses, 2) Left temple side, 3) Right temple side
+                    </small>
+                    <div id="imagePreview" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Brand</label>
+                    <input type="text" name="brand" placeholder="Ray-Ban" required>
+                </div>
+                <div class="form-group">
+                    <label>Model</label>
+                    <input type="text" name="model" placeholder="Aviator" required>
+                </div>
+                <div class="form-group">
+                    <label>Price ($)</label>
+                    <input type="number" name="price" placeholder="150" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="sunglasses">Sunglasses</option>
+                        <option value="eyeglasses">Eyeglasses</option>
+                        <option value="sports">Sports</option>
+                        <option value="fashion">Fashion</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Frame Width (mm) 
+                        <span style="font-weight: normal; color: #718096;">100-180</span>
+                    </label>
+                    <input type="number" name="frameWidth" placeholder="140" min="100" max="180" value="140" required
+                        title="Total horizontal width of the glasses frame from hinge to hinge, measured in millimeters. Typical adult frames range from 125–145mm.">
+                </div>
+                <div class="form-group">
+                    <label>Bridge Width (mm)
+                        <span style="font-weight: normal; color: #718096;">10-30</span>
+                    </label>
+                    <input type="number" name="bridgeWidth" placeholder="20" min="10" max="30" value="20" required
+                        title="Width of the bridge that sits on the nose, measured between the two lenses in millimeters. Typical values range from 14–24mm.">
+                </div>
+                <div class="form-group">
+                    <label>Temple Length (mm)
+                        <span style="font-weight: normal; color: #718096;">120-160</span>
+                    </label>
+                    <input type="number" name="templeLength" placeholder="145" min="120" max="160" value="145" required
+                        title="Length of the temple arm (the part that goes over the ear), measured from hinge to tip in millimeters. Typical values range from 135–150mm.">
+                </div>
+                <div class="form-group" style="align-self: end;">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Upload &amp; Generate</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="filterStatus('all')">All</div>
+            <div class="tab" onclick="filterStatus('processing')">Processing</div>
+            <div class="tab" onclick="filterStatus('generated')">Generated</div>
+            <div class="tab" onclick="filterStatus('approved')">Approved</div>
+            <div class="tab" onclick="filterStatus('failed')">Failed</div>
+        </div>
+
+        <!-- Glasses List -->
+        <div class="section">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+                <h2 style="margin-bottom: 0;">📦 Glasses Catalog</h2>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <span id="autoRefreshIndicator" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #48bb78; font-weight: 600;">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #48bb78; animation: pulse 2s ease-in-out infinite;"></span>
+                        Auto-refreshing
+                    </span>
+                    <span id="lastUpdated" style="font-size: 0.8rem; color: #718096;"></span>
+                    <button class="btn btn-secondary" onclick="manualRefresh()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">🔄 Refresh</button>
+                </div>
+            </div>
+            <div id="glassesList" class="glasses-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5002';
+        let currentFilter = 'all';
+        let pollInterval = null;
+
+        // ── helpers ──────────────────────────────────────────────────────────
+
+        function updateLastUpdated() {
+            const el = document.getElementById('lastUpdated');
+            if (el) el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+        }
+
+        function setAutoRefreshIndicator(active) {
+            const el = document.getElementById('autoRefreshIndicator');
+            if (!el) return;
+            el.style.display = active ? 'flex' : 'none';
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function escapeAttr(str) {
+            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function buildGlassesCard(g) {
+            // Status icon
+            const statusIcons = { processing: '\u23F3', generated: '\u2713', approved: '\u2705', failed: '\u2717' };
+            const icon = statusIcons[g.status] || '';
+
+            // Retry count badge
+            const retryBadge = (g.retryCount && g.retryCount > 0)
+                ? ' <span style="font-size:0.7rem;font-weight:400;opacity:0.8;">(' + g.retryCount + ' retr' + (g.retryCount === 1 ? 'y' : 'ies') + ')</span>'
+                : '';
+
+            // Timestamps / duration
+            let timingHtml = '';
+            if (g.generationStartedAt) {
+                timingHtml += '<div style="font-size:0.75rem;color:#718096;margin-top:0.25rem;">\u23F1 Started: ' + new Date(g.generationStartedAt).toLocaleTimeString() + '</div>';
+            }
+            if (g.generationCompletedAt) {
+                timingHtml += '<div style="font-size:0.75rem;color:#718096;">\uD83C\uDFC1 Completed: ' + new Date(g.generationCompletedAt).toLocaleTimeString() + '</div>';
+                if (g.generationStartedAt) {
+                    const ms = new Date(g.generationCompletedAt) - new Date(g.generationStartedAt);
+                    const sec = Math.round(ms / 1000);
+                    const dur = sec >= 60 ? Math.floor(sec / 60) + 'm ' + (sec % 60) + 's' : sec + 's';
+                    timingHtml += '<div style="font-size:0.75rem;color:#718096;">\u26A1 Duration: ' + dur + '</div>';
+                }
+            }
+
+            // Error block
+            const errorHtml = g.generationError
+                ? '<div class="error-message">\u26A0\uFE0F ' + escapeHtml(g.generationError) + '</div>'
+                : '';
+
+            // Action buttons
+            let actionsHtml = '';
+            if (g.status === 'processing') {
+                actionsHtml += '<button class="btn btn-secondary" disabled>\u23F3 Generating...</button>';
+            }
+            if (g.status === 'generated') {
+                actionsHtml += '<button class="btn btn-success" onclick="approve(\'' + g.id + '\')">Approve</button>';
+                actionsHtml += '<button class="btn btn-secondary" onclick="viewModel(\'' + g.id + '\')">View Model</button>';
+            }
+            if (g.status === 'failed') {
+                const errAttr = g.generationError ? ' data-prev-error="' + escapeAttr(g.generationError) + '"' : '';
+                actionsHtml += '<button class="btn btn-primary" id="retry-btn-' + g.id + '"' + errAttr + ' onclick="retry(\'' + g.id + '\', this)">\uD83D\uDD04 Retry</button>';
+            }
+            if (g.status === 'approved') {
+                actionsHtml += '<button class="btn btn-secondary" onclick="viewModel(\'' + g.id + '\')">View Model</button>';
+            }
+            actionsHtml += '<button class="btn btn-danger" onclick="deleteGlasses(\'' + g.id + '\')">Delete</button>';
+
+            const dimHtml = g.dimensions
+                ? '<br>\uD83D\uDCCF ' + g.dimensions.frameWidth + 'mm \xD7 ' + g.dimensions.bridgeWidth + 'mm \xD7 ' + g.dimensions.templeLength + 'mm'
+                : '';
+
+            return '<div class="glasses-card">'
+                + '<img src="' + API_URL + g.thumbnailUrl + '" class="glasses-image" alt="' + escapeAttr(g.brand + ' ' + g.model) + '">'
+                + '<div class="glasses-info">'
+                + '<div class="status-badge status-' + g.status + '">' + icon + ' ' + g.status.toUpperCase() + retryBadge + '</div>'
+                + '<div class="glasses-title">' + escapeHtml(g.brand) + ' ' + escapeHtml(g.model) + '</div>'
+                + '<div class="glasses-meta">' + escapeHtml(g.category) + ' \u2022 ' + escapeHtml(String(g.price)) + dimHtml + '</div>'
+                + timingHtml
+                + errorHtml
+                + '<div class="actions" style="margin-top:0.75rem;">' + actionsHtml + '</div>'
+                + '</div>'
+                + '</div>';
+        }
+
+        // ── image preview ─────────────────────────────────────────────────────
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            const files = Array.from(e.target.files);
+            if (files.length !== 3) {
+                preview.innerHTML = '<small style="color:#e53e3e;">\u26A0\uFE0F Please select exactly 3 images (you selected ' + files.length + ')</small>';
+                return;
+            }
+            files.forEach(function(file, index) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.cssText = 'width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0;';
+                    const label = document.createElement('div');
+                    label.style.cssText = 'font-size:0.75rem;color:#718096;margin-top:0.25rem;';
+                    label.textContent = index === 0 ? 'Front' : index === 1 ? 'Left Temple' : 'Right Temple';
+                    const container = document.createElement('div');
+                    container.style.textAlign = 'center';
+                    container.appendChild(img);
+                    container.appendChild(label);
+                    preview.appendChild(container);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // ── stats ─────────────────────────────────────────────────────────────
+
+        async function loadStats() {
+            try {
+                const res = await fetch(API_URL + '/admin/stats');
+                const stats = await res.json();
+                document.getElementById('stats').innerHTML =
+                    '<div class="stat-card"><div class="stat-value">' + stats.total + '</div><div class="stat-label">Total Glasses</div></div>'
+                    + '<div class="stat-card"><div class="stat-value">' + (stats.processing || 0) + '</div><div class="stat-label">Processing</div></div>'
+                    + '<div class="stat-card"><div class="stat-value">' + stats.generated + '</div><div class="stat-label">Generated</div></div>'
+                    + '<div class="stat-card"><div class="stat-value">' + stats.approved + '</div><div class="stat-label">Approved</div></div>'
+                    + '<div class="stat-card"><div class="stat-value">' + (stats.failed || 0) + '</div><div class="stat-label">Failed</div></div>';
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // ── glasses list ──────────────────────────────────────────────────────
+
+        async function loadGlasses() {
+            try {
+                const url = currentFilter === 'all'
+                    ? API_URL + '/admin/glasses'
+                    : API_URL + '/admin/glasses?status=' + currentFilter;
+
+                const res = await fetch(url);
+                const data = await res.json();
+                const list = document.getElementById('glassesList');
+
+                updateLastUpdated();
+
+                if (data.glasses.length === 0) {
+                    list.innerHTML = '<p style="color:#718096;">No glasses found</p>';
+                    managePoll(false);
+                    return;
+                }
+
+                const hasProcessing = data.glasses.some(function(g) { return g.status === 'processing'; });
+                managePoll(hasProcessing);
+
+                list.innerHTML = data.glasses.map(buildGlassesCard).join('');
+
+            } catch (error) {
+                console.error('Failed to load glasses:', error);
+            }
+        }
+
+        // ── polling ───────────────────────────────────────────────────────────
+
+        function managePoll(shouldPoll) {
+            if (shouldPoll && !pollInterval) {
+                console.log('Starting auto-refresh polling');
+                pollInterval = setInterval(function() {
+                    loadGlasses();
+                    loadStats();
+                }, 3000);
+                setAutoRefreshIndicator(true);
+            } else if (!shouldPoll && pollInterval) {
+                console.log('Stopping auto-refresh polling');
+                clearInterval(pollInterval);
+                pollInterval = null;
+                setAutoRefreshIndicator(false);
+            }
+        }
+
+        function manualRefresh() {
+            loadGlasses();
+            loadStats();
+        }
+
+        // ── upload form ───────────────────────────────────────────────────────
+
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const msgDiv = document.getElementById('uploadMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            const imageInput = document.querySelector('input[name="images"]');
+            if (!imageInput.files || imageInput.files.length !== 3) {
+                msgDiv.innerHTML = '<div class="message error">\u2717 Please select exactly 3 images (front view + both temple sides)</div>';
+                setTimeout(function() { msgDiv.innerHTML = ''; }, 5000);
+                return;
+            }
+
+            // Loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+
+            try {
+                const res = await fetch(API_URL + '/admin/upload-glasses', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    msgDiv.innerHTML = '<div class="message success">\u2713 Glasses uploaded - generation started automatically!</div>';
+                    e.target.reset();
+                    e.target.frameWidth.value = 140;
+                    e.target.bridgeWidth.value = 20;
+                    e.target.templeLength.value = 145;
+                    document.getElementById('imagePreview').innerHTML = '';
+                    loadGlasses();
+                    loadStats();
+                } else {
+                    if (data.validationErrors) {
+                        msgDiv.innerHTML = '<div class="message error">\u2717 ' + data.validationErrors.join('<br>') + '</div>';
+                    } else {
+                        msgDiv.innerHTML = '<div class="message error">\u2717 ' + escapeHtml(data.error) + '</div>';
+                    }
+                }
+            } catch (error) {
+                msgDiv.innerHTML = '<div class="message error">\u2717 Upload failed: ' + escapeHtml(error.message) + '</div>';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload & Generate';
+            }
+
+            setTimeout(function() { msgDiv.innerHTML = ''; }, 5000);
+        });
+
+        // ── retry ─────────────────────────────────────────────────────────────
+
+        async function retry(id, btnEl) {
+            const prevError = btnEl && btnEl.getAttribute('data-prev-error');
+            const msg = prevError
+                ? 'Retry generation for this glasses?\n\nPrevious error:\n' + prevError
+                : 'Retry generation for this glasses?';
+            if (!confirm(msg)) return;
+
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.textContent = 'Retrying...';
+            }
+
+            try {
+                const res = await fetch(API_URL + '/admin/retry-model/' + id, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    loadGlasses();
+                    loadStats();
+                } else {
+                    alert('Retry failed: ' + data.error);
+                    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\uD83D\uDD04 Retry'; }
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\uD83D\uDD04 Retry'; }
+            }
+        }
+
+        // ── approve ───────────────────────────────────────────────────────────
+
+        async function approve(id) {
+            if (!confirm('Approve this glasses model?')) return;
+
+            try {
+                const res = await fetch(API_URL + '/admin/approve/' + id, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approvedBy: 'admin' })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    loadGlasses();
+                    loadStats();
+                } else {
+                    alert('Approval failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // ── delete ────────────────────────────────────────────────────────────
+
+        async function deleteGlasses(id) {
+            if (!confirm('Delete this glasses? This cannot be undone.')) return;
+
+            try {
+                const res = await fetch(API_URL + '/admin/delete/' + id, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.success) {
+                    loadGlasses();
+                    loadStats();
+                } else {
+                    alert('Deletion failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // ── view model ────────────────────────────────────────────────────────
+
+        function viewModel(id) {
+            window.open(API_URL + '/model-preview.html?model=' + id, '_blank');
+        }
+
+        // ── filter tabs ───────────────────────────────────────────────────────
+
+        function filterStatus(status) {
+            currentFilter = status;
+            document.querySelectorAll('.tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            loadGlasses();
+        }
+
+        // ── init ──────────────────────────────────────────────────────────────
+
+        loadStats();
+        loadGlasses();
+    </script>
+</body>
+</html>

@@ -7,6 +7,10 @@ import AWS from "aws-sdk";
 import path from "path";
 import { authMiddleware } from "./auth.mjs";
 import { sendWebhook } from "./webhook.mjs";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 
@@ -29,22 +33,38 @@ const upload = multer({ dest: "uploads/" });
 const REQUIRE_AUTH = process.env.REQUIRE_AUTH === "true" || false;
 
 // WASABI / S3 config
-const s3 = new AWS.S3({
-  endpoint: process.env.AWS_ENDPOINT || "s3.eu-west-1.wasabisys.com",
-  region: process.env.AWS_REGION || "eu-west-1",
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  signatureVersion: "v4"
-});
+const USE_LOCAL = process.env.USE_LOCAL === "true";
+
+let s3 = null;
+if (!USE_LOCAL) {
+  s3 = new AWS.S3({
+    endpoint: process.env.AWS_ENDPOINT || "s3.eu-west-1.wasabisys.com",
+    region: process.env.AWS_REGION || "eu-west-1",
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    signatureVersion: "v4"
+  });
+}
 
 const BUCKET = process.env.S3_BUCKET || "jigu";
 const REF_DIR = "reference_images";
+const LOCAL_MODELS_DIR = "local_models";
 
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 if (!fs.existsSync(REF_DIR)) fs.mkdirSync(REF_DIR);
+if (!fs.existsSync(LOCAL_MODELS_DIR)) fs.mkdirSync(LOCAL_MODELS_DIR);
 
-// Download reference images from S3 on startup
+// Serve static files for local models
+app.use('/local-models', express.static(LOCAL_MODELS_DIR));
+app.use('/references', express.static(REF_DIR));
+
+// Download reference images from S3 on startup (if using cloud)
 async function downloadReferenceImages() {
+  if (USE_LOCAL) {
+    console.log("Using local storage mode");
+    return;
+  }
+  
   console.log("Checking reference images...");
   try {
     const data = await s3.listObjectsV2({ Bucket: BUCKET, Prefix: "reference_images/" }).promise();
@@ -132,6 +152,23 @@ app.get("/debug", async (req, res) => {
 
 app.get("/models", optionalAuth, async (req, res) => {
   try {
+    // Use local files if USE_LOCAL is true
+    if (USE_LOCAL) {
+      if (!fs.existsSync(LOCAL_MODELS_DIR)) {
+        return res.json([]);
+      }
+      
+      const files = fs.readdirSync(LOCAL_MODELS_DIR)
+        .filter(f => f.toLowerCase().endsWith(".glb"))
+        .map(f => ({
+          name: f,
+          url: `http://localhost:${PORT}/local-models/${f}`
+        }));
+      
+      return res.json(files);
+    }
+    
+    // Otherwise use S3/Wasabi
     const data = await s3.listObjectsV2({ Bucket: BUCKET }).promise();
     const files = (data.Contents || [])
         .filter(f => f.Key.toLowerCase().endsWith(".glb"))
@@ -152,6 +189,27 @@ app.post("/upload-model", writeAuth, upload.fields([{ name: "file" }, { name: "t
     const thumb = req.files['thumb'] ? req.files['thumb'][0] : null;
     if (!file) return res.status(400).json({ error: "No GLB file uploaded (field 'file')" });
 
+    if (USE_LOCAL) {
+      // Save to local_models folder
+      const glbPath = path.join(LOCAL_MODELS_DIR, file.originalname);
+      fs.copyFileSync(file.path, glbPath);
+      
+      if (thumb) {
+        const thumbPath = path.join(REF_DIR, thumb.originalname);
+        fs.copyFileSync(thumb.path, thumbPath);
+      }
+      
+      fs.unlinkSync(file.path);
+      if (thumb) fs.unlinkSync(thumb.path);
+      
+      return res.json({ 
+        ok: true, 
+        name: file.originalname,
+        url: `http://localhost:${PORT}/local-models/${file.originalname}`
+      });
+    }
+
+    // Use S3/Wasabi
     const glbKey = file.originalname;
     await s3.upload({ Bucket: BUCKET, Key: glbKey, Body: fs.createReadStream(file.path), ContentType: "model/gltf-binary" }).promise();
 
@@ -201,15 +259,22 @@ app.post("/match-model", optionalAuth, upload.array("images", 5), async (req, re
         const jsonOut = JSON.parse(out);
         
         // Send webhook notification
+        let modelUrl = null;
+        if (USE_LOCAL) {
+          modelUrl = `http://localhost:${PORT}/local-models/${jsonOut.best_model}`;
+        } else {
+          modelUrl = s3.getSignedUrl("getObject", { 
+            Bucket: BUCKET, 
+            Key: jsonOut.best_model, 
+            Expires: 3600 
+          });
+        }
+        
         const webhookData = {
           best_model: jsonOut.best_model,
           confidence: jsonOut.confidence,
           source_image: jsonOut.source_image,
-          model_url: s3.getSignedUrl("getObject", { 
-            Bucket: BUCKET, 
-            Key: jsonOut.best_model, 
-            Expires: 3600 
-          }),
+          model_url: modelUrl,
           timestamp: new Date().toISOString(),
           images_count: req.files.length
         };

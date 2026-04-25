@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Connection Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f7fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a202c;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #38a169;
+        }
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #e53e3e;
+        }
+        .info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #3182ce;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Backend Connection Test</h1>
+        
+        <div class="test-section">
+            <h3>API URL Configuration</h3>
+            <input type="text" id="apiUrl" value="http://localhost:5000" placeholder="Enter API URL">
+            <button onclick="saveUrl()">Save URL</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1: Health Check</h3>
+            <button onclick="testHealth()">Test /health</button>
+            <div id="healthResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Root Endpoint</h3>
+            <button onclick="testRoot()">Test /</button>
+            <div id="rootResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: List Models</h3>
+            <button onclick="testModels()">Test /models</button>
+            <div id="modelsResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Debug Info</h3>
+            <button onclick="testDebug()">Test /debug</button>
+            <div id="debugResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Run All Tests</h3>
+            <button onclick="runAllTests()">🚀 Run All Tests</button>
+        </div>
+    </div>
+
+    <script>
+        let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:5000';
+        document.getElementById('apiUrl').value = API_URL;
+
+        function saveUrl() {
+            API_URL = document.getElementById('apiUrl').value;
+            localStorage.setItem('apiUrl', API_URL);
+            alert('API URL saved: ' + API_URL);
+        }
+
+        async function testEndpoint(endpoint, resultId) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.innerHTML = '<div class="result info">Testing...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Success (${response.status})
+                            ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            ❌ Error (${response.status})
+                            ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Connection Failed
+                        ${error.message}
+                        
+                        Possible causes:
+                        - Backend server is not running
+                        - Wrong API URL
+                        - CORS issue
+                        - Network problem
+                    </div>
+                `;
+            }
+        }
+
+        function testHealth() {
+            testEndpoint('/health', 'healthResult');
+        }
+
+        function testRoot() {
+            testEndpoint('/', 'rootResult');
+        }
+
+        function testModels() {
+            testEndpoint('/models', 'modelsResult');
+        }
+
+        function testDebug() {
+            testEndpoint('/debug', 'debugResult');
+        }
+
+        async function runAllTests() {
+            testHealth();
+            await new Promise(r => setTimeout(r, 500));
+            testRoot();
+            await new Promise(r => setTimeout(r, 500));
+            testModels();
+            await new Promise(r => setTimeout(r, 500));
+            testDebug();
+        }
+
+        // Auto-run tests on load
+        window.onload = () => {
+            setTimeout(runAllTests, 500);
+        };
+    </script>
+</body>
+</html>

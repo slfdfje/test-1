@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-const API = "https://ai-glasses-backend.onrender.com";
+const API = import.meta.env.VITE_API_URL || "https://test-1-production-7a52.up.railway.app";
 
 export default function Viewer({ modelName }) {
   const ref = useRef(null);
@@ -11,15 +11,15 @@ export default function Viewer({ modelName }) {
 
   useEffect(() => {
     if (!modelName) return;
-
-    // Fetch the model URL from API
     fetch(`${API}/models`)
       .then(r => r.json())
       .then(models => {
-        const model = models.find(m => m.name === modelName);
-        if (model) {
-          setUrl(model.url);
-        }
+        const target = modelName.toLowerCase();
+        const found = models.find(m => {
+          const name = String(m.name || '').toLowerCase();
+          return name === target || name.endsWith('/' + target);
+        });
+        setUrl(found ? found.url : null);
       })
       .catch(err => console.error('Failed to fetch model URL:', err));
   }, [modelName]);
